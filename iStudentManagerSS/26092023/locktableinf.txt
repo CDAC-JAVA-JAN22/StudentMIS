@@ -1,0 +1,30 @@
+The following Performance Schema tables store lock data:
+
+metadata_locks: This table stores information about all of the current locks in the database, as well as information about locks that have been released in the past 15 minutes.
+table_handles: This table stores information about all of the table handles that are currently in use. Table handles contain information about the locks that have been acquired on a table.
+data_locks: This table stores information about all of the data locks that are currently in use. Data locks are used to protect individual rows of data from concurrent access.
+data_lock_waits: This table stores information about all of the data lock waits that are currently in progress. A data lock wait occurs when a transaction is waiting to acquire a data lock.
+
+
+SELECT * FROM performance_schema.metadata_locks;
+
+SELECT * FROM performance_schema.table_handles WHERE OBJECT_NAME = 'my_table';
+
+SELECT * FROM performance_schema.data_locks;
+
+SELECT * FROM performance_schema.data_lock_waits;
+
+
+To check performance_schema on your db:-  
+
+1. SHOW VARIABLES LIKE 'performance_schema%'; //to check if it is enabled or not
+2. SET GLOBAL performance_schema_instrument = ON; //if not enabled then this query enables it
+3. use performance_schema;
+4. show version();
+
+
+
+for older versions we have Information_schema for < MySQL Server5.7
+1. SELECT * FROM information_schema.INNODB_LOCKS;
+2. SELECT * FROM information_schema.PROCESSLIST;
+3. SELECT * FROM information_schema.INNODB_TRX;

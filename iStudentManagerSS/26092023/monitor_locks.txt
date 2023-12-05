@@ -1,0 +1,112 @@
+
+
+##############################################################################################  Procedure  ############################################################################################
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `run_donations`(campaignId INT)
+BEGIN
+    
+    DECLARE donation FLOAT;
+    DECLARE endTime INT;
+    
+    SET endTime = UNIX_TIMESTAMP() + 5;
+    
+    WHILE UNIX_TIMESTAMP() < endTime DO
+    
+    START TRANSACTION;
+    
+        SET donation = FLOOR(RAND() * 10000) / 100;
+        
+        INSERT INTO `donations` (`campaign_id`, `donation_sum`, `created_at`) VALUES(campaignId, donation, now());
+        UPDATE `campaigns` SET `donation_sum`=`donation_sum` + donation, `donation_count`=`donation_count` + 1
+        WHERE `id`=campaignId;
+
+    COMMIT;
+    
+    END WHILE;
+
+END
+
+
+##############################################################################################  Tables  #################################################################################################
+
+
+CREATE TABLE `campaigns` ( `id` INT NOT NULL AUTO_INCREMENT , `name` VARCHAR(255) NOT NULL , `donation_count` INT NOT NULL DEFAULT '0' , `donation_sum` FLOAT NOT NULL DEFAULT '0' , PRIMARY KEY (`id`)) ENGINE = InnoDB;
+
+
+INSERT INTO `campaigns` (`id`, `name`, `donation_count`, `donation_sum`) VALUES (NULL, 'Feed India', '0', '0'), (NULL, 'Flood Fund', '0', '0'), (NULL, 'Stray Animals', '0', '0');
+
+
+CREATE TABLE `donations` ( `id` INT NOT NULL AUTO_INCREMENT , `campaign_id` INT NOT NULL , `donation_sum` FLOAT NOT NULL , `created_at` DATETIME NOT NULL , PRIMARY KEY (`id`)) ENGINE = InnoDB;
+
+
+##############################################################################################  Watch Locks  ##############################################################################################
+
+mysql> select ENGINE, ENGINE_LOCK_ID, ENGINE_TRANSACTION_ID, THREAD_ID, LOCK_TYPE, LOCK_MODE, LOCK_STATUS, LOCK_DATA from performance_schema.data_locks;
+
+#For only given attributes of performance_schema.data_locks
+
+mysql> select * from performance_schema.data_locks;  
+
+#For all the attributes in performance_schema.data_locks
+
+###########################################################################################################################################################################################################
+
+Terminal 1:					|  Terminal 2:					|  Terminal 3:
+						|  mysql> call run_donations(1);  		|  mysql> call run_donations(1);
+mysql> call run_donations(1);			|  Query OK, 0 rows affected (59.03 sec) 	|  Query OK, 0 rows affected (59.10 sec)
+Query OK, 0 rows affected (59.89 sec)		|
+
+
+
+
+mysql> select * from  performance_schema.metadata_locks;
++-------------+--------------------+----------------+-------------+-----------------------+---------------------+---------------+-------------+-------------------+-----------------+----------------+
+| OBJECT_TYPE | OBJECT_SCHEMA      | OBJECT_NAME    | COLUMN_NAME | OBJECT_INSTANCE_BEGIN | LOCK_TYPE           | LOCK_DURATION | LOCK_STATUS | SOURCE            | OWNER_THREAD_ID | OWNER_EVENT_ID |
++-------------+--------------------+----------------+-------------+-----------------------+---------------------+---------------+-------------+-------------------+-----------------+----------------+
+| TABLE       | locks_test         | donations      | NULL        |         1761636701216 | SHARED_WRITE        | TRANSACTION   | GRANTED     | sql_parse.cc:6014 |             193 |         200369 |
+| TABLE       | locks_test         | donations      | NULL        |         1761560713584 | SHARED_WRITE        | TRANSACTION   | GRANTED     | sql_parse.cc:6014 |             197 |         210368 |
+| TABLE       | locks_test         | campaigns      | NULL        |         1761636702176 | SHARED_WRITE        | TRANSACTION   | GRANTED     | sql_parse.cc:6014 |             193 |         200370 |
+| COMMIT      | NULL               | NULL           | NULL        |         1761636701984 | INTENTION_EXCLUSIVE | EXPLICIT      | GRANTED     | handler.cc:1697   |             193 |         200371 |
+| TABLE       | locks_test         | campaigns      | NULL        |         1761560716848 | SHARED_WRITE        | TRANSACTION   | GRANTED     | sql_parse.cc:6014 |             197 |         210369 |
+| COMMIT      | NULL               | NULL           | NULL        |         1761560716944 | INTENTION_EXCLUSIVE | EXPLICIT      | GRANTED     | handler.cc:1697   |             197 |         210370 |
+| TABLE       | locks_test         | donations      | NULL        |         1761641122960 | SHARED_WRITE        | TRANSACTION   | GRANTED     | sql_parse.cc:6014 |             192 |         168535 |
+| TABLE       | locks_test         | campaigns      | NULL        |         1761641123152 | SHARED_WRITE        | TRANSACTION   | GRANTED     | sql_parse.cc:6014 |             192 |         168536 |
+| COMMIT      | NULL               | NULL           | NULL        |         1761641123056 | INTENTION_EXCLUSIVE | EXPLICIT      | GRANTED     | handler.cc:1697   |             192 |         168537 |
+| TABLE       | performance_schema | metadata_locks | NULL        |         1761641122192 | SHARED_READ         | TRANSACTION   | GRANTED     | sql_parse.cc:6014 |             198 |             51 |
++-------------+--------------------+----------------+-------------+-----------------------+---------------------+---------------+-------------+-------------------+-----------------+----------------+
+10 rows in set (0.00 sec)
+
+mysql>
+
+mysql> SELECT * FROM performance_schema.data_locks;
++--------+-------------------------------------+-----------------------+-----------+----------+---------------+-------------+----------------+-------------------+------------+-----------------------+-----------+---------------+-------------+-----------+
+| ENGINE | ENGINE_LOCK_ID                      | ENGINE_TRANSACTION_ID | THREAD_ID | EVENT_ID | OBJECT_SCHEMA | OBJECT_NAME | PARTITION_NAME | SUBPARTITION_NAME | INDEX_NAME | OBJECT_INSTANCE_BEGIN | LOCK_TYPE | LOCK_MODE     | LOCK_STATUS | LOCK_DATA |
++--------+-------------------------------------+-----------------------+-----------+----------+---------------+-------------+----------------+-------------------+------------+-----------------------+-----------+---------------+-------------+-----------+
+| INNODB | 1761578687904:1287:1761550340264    |                186732 |       193 |   133564 | locks_test    | donations   | NULL           | NULL              | NULL       |         1761550340264 | TABLE     | IX            | GRANTED     | NULL      |
+| INNODB | 1761578687904:1286:1761550340352    |                186732 |       193 |   133565 | locks_test    | campaigns   | NULL           | NULL              | NULL       |         1761550340352 | TABLE     | IX            | GRANTED     | NULL      |
+| INNODB | 1761578687904:229:4:2:1761550337480 |                186732 |       193 |   133565 | locks_test    | campaigns   | NULL           | NULL              | PRIMARY    |         1761550337480 | RECORD    | X,REC_NOT_GAP | WAITING     | 1         |
+| INNODB | 1761578689600:1287:1761550349640    |                186730 |       197 |   139739 | locks_test    | donations   | NULL           | NULL              | NULL       |         1761550349640 | TABLE     | IX            | GRANTED     | NULL      |
+| INNODB | 1761578689600:1286:1761550349728    |                186730 |       197 |   139740 | locks_test    | campaigns   | NULL           | NULL              | NULL       |         1761550349728 | TABLE     | IX            | GRANTED     | NULL      |
+| INNODB | 1761578689600:229:4:2:1761550346856 |                186730 |       197 |   139740 | locks_test    | campaigns   | NULL           | NULL              | PRIMARY    |         1761550346856 | RECORD    | X,REC_NOT_GAP | GRANTED     | 1         |
++--------+-------------------------------------+-----------------------+-----------+----------+---------------+-------------+----------------+-------------------+------------+-----------------------+-----------+---------------+-------------+-----------+
+6 rows in set (0.00 sec)
+
+###########################################################################################################################################################################################################
+
+mysql> select * FROM performance_schema.events_statements_history_long;
+
+mysql> SELECT
+
+ EVENT_ID,
+
+ SQL_TEXT,
+
+ TIMER_START,
+
+ TIMER_END,
+
+ TIMER_WAIT
+
+FROM performance_schema.events_statements_history
+
+WHERE SQL_TEXT LIKE '%insert%';

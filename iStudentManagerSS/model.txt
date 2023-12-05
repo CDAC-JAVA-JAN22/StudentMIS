@@ -1,0 +1,182 @@
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+
+@Entity
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long userId;
+    private String username;
+    private String password;
+    private String role;
+
+    // Getters and setters
+}
+
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToOne;
+import javax.persistence.JoinColumn;
+
+@Entity
+public class Student {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long studentId;
+    private String name;
+    private String email;
+    private String address;
+    private String phone;
+
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    // Getters and setters
+}
+
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+
+@Entity
+public class Course {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long courseId;
+    private String name;
+    private String duration;
+
+    @ManyToOne
+    private Faculty faculty;
+
+    // Getters and setters
+}
+
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+
+@Entity
+public class Enrollment {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long enrollmentId;
+
+    @ManyToOne
+    private Student student;
+
+    @ManyToOne
+    private Course course;
+
+    // Getters and setters
+}
+
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+
+@Entity
+public class Grade {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long gradeId;
+    private double grade;
+
+    @ManyToOne
+    private Student student;
+
+    @ManyToOne
+    private Course course;
+
+    // Getters and setters
+}
+
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToOne;
+import javax.persistence.JoinColumn;
+
+@Entity
+public class Faculty {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long facultyId;
+    private String name;
+    private double salary;
+    private String email;
+
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    // Getters and setters
+}
+
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+
+@Entity
+public class Fee {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long feeId;
+    private double amount;
+    private String date;
+    private String status;
+
+    @ManyToOne
+    private Student student;
+
+    @ManyToOne
+    private Course course;
+
+    // Getters and setters
+}
+
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+
+@Entity
+public class Attendance {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long attendanceId;
+    private String date;
+    private String status;
+
+    @ManyToOne
+    private Student student;
+
+    @ManyToOne
+    private Course course;
+
+    // Getters and setters
+}
+
+

@@ -1,0 +1,118 @@
+Database Transaction -
+
+
+############################################################################
+
+The two primary internal tables that store information about 
+transaction locks in InnoDB are:
+
+	1. performance_schema.data_locks
+	2. performance_schema.metadata_locks
+
+The performance_schema.data_locks table provides information 
+about locks on data pages, while the performance_schema.metadata_locks table 
+provides information about locks on metadata pages.
+
+  > SELECT * FROM performance_schema.data_locks;
+  > SELECT * FROM performance_schema.metadata_locks;
+  > SELECT * FROM performance_schema.data_locks WHERE object_name = 'my_table';
+
+
+You can also use the SHOW ENGINE INNODB STATUS statement to get 
+information about all locks held by InnoDB
+  
+  > SHOW ENGINE INNODB STATUS;
+
+############################################################################
+
+To get all the tables in use and the tables which are locked we use 
+following command
+It shows db name, table name, In_use, Name_locked
+So here In_use col shows table is locked if value is greater than 0
+
+   > show open tables;
+
+############################################################################
+
+  > show open tables where In_use > 1;
+
+Gives all tables which are open in mysql table cache and gives locks on 
+tables by In_use column whose value shows number of locks on table
+
+############################################################################
+
+  > show processlist;
+
+statement displays a list of all of the threads that are currently 
+running on your MySQL server. The output includes the following 
+information for each thread:
+
+ID: The identifier for the thread.
+USER: The user who started the thread.
+HOST: The host from which the thread connected.
+db: The database that the thread is using.
+Command: The command that the thread is executing (if any).
+Time: The amount of time that the thread has been executing.
+State: The current state of the thread.
+
+############################################################################
+
+Below sql query will return a list of all locks that are currently 
+being held by InnoDB. The following is an explanation of each column 
+in the output:
+
+Trx_Id: The identifier of the transaction that is holding the lock.
+Table: The name of the table that is locked.
+Index: The name of the index that is locked (if any).
+Data: The specific data that is locked (e.g., a row, a page).
+Mode: The mode of the lock (e.g., X, S).
+Status: The status of the lock (e.g., GRANTED, WAITING).
+Type: The type of the lock (e.g., TABLE, ROW).
+
+  > SELECT ENGINE_TRANSACTION_ID as Trx_Id, 
+              OBJECT_NAME as `Table`, 
+              INDEX_NAME as `Index`, 
+              LOCK_DATA as Data, 
+              LOCK_MODE as Mode, 
+              LOCK_STATUS as Status, 
+              LOCK_TYPE as Type 
+    FROM performance_schema.data_locks;
+
+############################################################################
+
+  > SELECT * FROM information_schema.INNODB_TRX;
+
+This statement will return a list of all of the transactions that are currently 
+executing inside InnoDB. The trx_started column in this table shows the 
+time at which the transaction started
+
+############################################################################
+
+  > SELECT
+  	trx_id,
+  	trx_state,
+	trx_started,
+	NOW() - trx_started AS lock_time
+	FROM information_schema.INNODB_TRX
+	WHERE trx_state IN ('ACTIVE', 'WAITING');
+
+Usung this we can get total amount of time from which the transaction
+is active or waiting
+
+############################################################################
+
+  > SELECT * FROM information_schema.PROCESSLIST;
+
+This statement will return a list of all of the threads that are currently 
+running on your MySQL server. The output includes the following 
+information for each thread:
+
+ID: The identifier for the thread.
+USER: The user who started the thread.
+HOST: The host from which the thread connected.
+db: The database that the thread is using.
+Command: The command that the thread is executing (if any).
+Time: The amount of time that the thread has been executing.
+State: The current state of the thread.
+
+############################################################################
